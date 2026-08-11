@@ -11,6 +11,15 @@ public static class GameConfig
     public const float ArenaHeight = 14f;
     public const float WallThickness = 1f;
 
+    // Second room, attached to the right of the arena through a doorway in the
+    // shared wall. The doorway is centered vertically on y = 0.
+    public const float Room2Width = 36f;
+    public const float Room2Height = 22f;
+    public const float Room2CenterX = ArenaWidth / 2f + WallThickness + Room2Width / 2f;
+    public const float DoorHeight = 4f;
+    // Centerline of the dividing wall; anything with x beyond this is in room 2.
+    public const float DividerX = ArenaWidth / 2f + WallThickness / 2f;
+
     // Player
     public const float PlayerSpeed = 6f;
     public const int PlayerMaxHp = 100;
@@ -19,8 +28,8 @@ public static class GameConfig
     // Enemies (EnemySpeed must stay below PlayerSpeed so the player can escape)
     public const float EnemySpeed = 3.5f;
     public const int EnemyContactDamage = 10;
-    public const float SpawnIntervalStart = 2.0f;
-    public const float SpawnIntervalEnd = 0.6f;
+    public const float SpawnIntervalStart = 3.5f;
+    public const float SpawnIntervalEnd = 1.5f;
     public const float SpawnRampDuration = 60f;
     public const float SpawnEdgeInset = 1.0f;
 

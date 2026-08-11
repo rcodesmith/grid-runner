@@ -45,15 +45,18 @@ public class EnemySpawner : MonoBehaviour
 
     static Vector2 RandomEdgePosition()
     {
-        float halfW = GameConfig.ArenaWidth / 2f - GameConfig.SpawnEdgeInset;
-        float halfH = GameConfig.ArenaHeight / 2f - GameConfig.SpawnEdgeInset;
+        // Either room; enemies from the other room chase through the doorway.
+        bool secondRoom = Random.value < 0.5f;
+        Vector2 center = secondRoom ? new Vector2(GameConfig.Room2CenterX, 0f) : Vector2.zero;
+        float halfW = (secondRoom ? GameConfig.Room2Width : GameConfig.ArenaWidth) / 2f - GameConfig.SpawnEdgeInset;
+        float halfH = (secondRoom ? GameConfig.Room2Height : GameConfig.ArenaHeight) / 2f - GameConfig.SpawnEdgeInset;
 
         switch (Random.Range(0, 4))
         {
-            case 0: return new Vector2(Random.Range(-halfW, halfW), halfH);   // top
-            case 1: return new Vector2(Random.Range(-halfW, halfW), -halfH);  // bottom
-            case 2: return new Vector2(-halfW, Random.Range(-halfH, halfH));  // left
-            default: return new Vector2(halfW, Random.Range(-halfH, halfH));  // right
+            case 0: return center + new Vector2(Random.Range(-halfW, halfW), halfH);   // top
+            case 1: return center + new Vector2(Random.Range(-halfW, halfW), -halfH);  // bottom
+            case 2: return center + new Vector2(-halfW, Random.Range(-halfH, halfH));  // left
+            default: return center + new Vector2(halfW, Random.Range(-halfH, halfH));  // right
         }
     }
 }

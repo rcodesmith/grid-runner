@@ -49,10 +49,27 @@ public class Enemy : MonoBehaviour
             return;
         }
 
-        Vector2 toPlayer = (Vector2)_target.position - _body.position;
-        _body.linearVelocity = toPlayer.sqrMagnitude > 0.0001f
-            ? toPlayer.normalized * GameConfig.EnemySpeed
+        Vector2 toTarget = ChaseTarget() - _body.position;
+        _body.linearVelocity = toTarget.sqrMagnitude > 0.0001f
+            ? toTarget.normalized * GameConfig.EnemySpeed
             : Vector2.zero;
+    }
+
+    // Straight-line chase pins enemies against the dividing wall when the
+    // player is in the other room, so steer through the doorway first. The
+    // waypoint sits slightly past the divider so the enemy actually crosses
+    // it before switching back to chasing the player directly.
+    Vector2 ChaseTarget()
+    {
+        bool enemyInSecondRoom = _body.position.x > GameConfig.DividerX;
+        bool playerInSecondRoom = _target.position.x > GameConfig.DividerX;
+        if (enemyInSecondRoom == playerInSecondRoom)
+        {
+            return _target.position;
+        }
+
+        float doorwayOvershoot = playerInSecondRoom ? 1.5f : -1.5f;
+        return new Vector2(GameConfig.DividerX + doorwayOvershoot, 0f);
     }
 
     void OnCollisionEnter2D(Collision2D collision)
