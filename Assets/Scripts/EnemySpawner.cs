@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Spawns enemies at random points just inside the arena edges. The spawn
+/// Spawns enemies at a randomly chosen SpawnPoint marker. The spawn
 /// interval ramps from SpawnIntervalStart down to SpawnIntervalEnd over
 /// SpawnRampDuration seconds. Pauses automatically on game over because
 /// Time.timeScale is 0.
@@ -32,7 +32,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (_nextSpawnIn <= 0f)
         {
-            Enemy.Spawn(RandomEdgePosition(), _player, _container);
+            Enemy.Spawn(NextSpawnPosition(), _player, _container);
             _nextSpawnIn = CurrentInterval();
         }
     }
@@ -41,6 +41,16 @@ public class EnemySpawner : MonoBehaviour
     {
         float ramp = Mathf.Clamp01(_elapsed / GameConfig.SpawnRampDuration);
         return Mathf.Lerp(GameConfig.SpawnIntervalStart, GameConfig.SpawnIntervalEnd, ramp);
+    }
+
+    // Picks one of the placed spawn points at random. Falls back to a random
+    // room edge if none exist, so the spawner still works without them.
+    static Vector2 NextSpawnPosition()
+    {
+        var points = SpawnPoint.All;
+        return points.Count > 0
+            ? (Vector2)points[Random.Range(0, points.Count)].transform.position
+            : RandomEdgePosition();
     }
 
     static Vector2 RandomEdgePosition()

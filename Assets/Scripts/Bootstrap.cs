@@ -96,6 +96,26 @@ public static class Bootstrap
         CreateWall(arena.transform, "Wall Divider Top", new Vector2(GameConfig.DividerX, doorHalf + segmentH / 2f), new Vector2(t, segmentH));
         CreateWall(arena.transform, "Wall Divider Bottom", new Vector2(GameConfig.DividerX, -(doorHalf + segmentH / 2f)), new Vector2(t, segmentH));
         CreateFloor(arena.transform, "Door Floor", new Vector2(GameConfig.DividerX, 0f), new Vector2(t, GameConfig.DoorHeight));
+
+        CreateSpawnPoints(arena.transform);
+    }
+
+    // Two spawn points per room, tucked into opposite corners so enemies never
+    // appear on top of the player, who starts at the origin.
+    static void CreateSpawnPoints(Transform parent)
+    {
+        float inset = GameConfig.SpawnPointCornerInset;
+
+        float halfW = GameConfig.ArenaWidth / 2f - inset;
+        float halfH = GameConfig.ArenaHeight / 2f - inset;
+        SpawnPoint.Create(parent, "Spawn Point 1A", new Vector2(-halfW, halfH));
+        SpawnPoint.Create(parent, "Spawn Point 1B", new Vector2(-halfW, -halfH));
+
+        float cx = GameConfig.Room2CenterX;
+        float r2HalfW = GameConfig.Room2Width / 2f - inset;
+        float r2HalfH = GameConfig.Room2Height / 2f - inset;
+        SpawnPoint.Create(parent, "Spawn Point 2A", new Vector2(cx + r2HalfW, r2HalfH));
+        SpawnPoint.Create(parent, "Spawn Point 2B", new Vector2(cx + r2HalfW, -r2HalfH));
     }
 
     // Floor pieces are visual only, no collider.

@@ -33,6 +33,12 @@ public static class GameConfig
     public const float SpawnRampDuration = 60f;
     public const float SpawnEdgeInset = 1.0f;
 
+    // Spawn points: fixed red circles enemies emerge from, two per room. Insets
+    // are measured from each room's corner, so the points sit on the diagonal
+    // just inside opposite corners.
+    public const float SpawnPointSize = 1.6f;
+    public const float SpawnPointCornerInset = 2.5f;
+
     // Projectiles (one hit kills an enemy)
     public const float ProjectileSpeed = 12f;
     public const float ProjectileLifetime = 2f;
@@ -42,6 +48,7 @@ public static class GameConfig
     public static readonly Color EnemyColor = new Color(0.90f, 0.25f, 0.20f);
     public static readonly Color ProjectileColor = new Color(1.00f, 0.85f, 0.25f);
     public static readonly Color WallColor = new Color(0.45f, 0.45f, 0.50f);
+    public static readonly Color SpawnPointColor = new Color(0.85f, 0.15f, 0.15f, 0.75f);
     public static readonly Color FloorColor = new Color(0.13f, 0.12f, 0.15f);
     public static readonly Color CameraBackgroundColor = new Color(0.05f, 0.05f, 0.07f);
     public static readonly Color HpBarFillColor = new Color(0.30f, 0.85f, 0.35f);
