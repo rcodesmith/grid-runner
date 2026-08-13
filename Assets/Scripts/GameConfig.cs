@@ -20,6 +20,18 @@ public static class GameConfig
     // Centerline of the dividing wall; anything with x beyond this is in room 2.
     public const float DividerX = ArenaWidth / 2f + WallThickness / 2f;
 
+    // Third room (medium — between room 1 and room 2 in size), attached to the
+    // right of room 2 through a second doorway, also centered on y = 0.
+    public const float Room3Width = 30f;
+    public const float Room3Height = 18f;
+    public const float Room3CenterX = Room2CenterX + Room2Width / 2f + WallThickness + Room3Width / 2f;
+    // Centerline of the room 2 / room 3 dividing wall.
+    public const float Divider2X = Room2CenterX + Room2Width / 2f + WallThickness / 2f;
+
+    // Treasure: sitting at the far end of room 3. Touching it wins the game.
+    public const float TreasureSize = 1.8f;
+    public const float TreasureEdgeInset = 4f;
+
     // Player
     public const float PlayerSpeed = 6f;
     public const int PlayerMaxHp = 100;
@@ -52,6 +64,7 @@ public static class GameConfig
     public static readonly Color ProjectileColor = new Color(1.00f, 0.85f, 0.25f);
     public static readonly Color WallColor = new Color(0.45f, 0.45f, 0.50f);
     public static readonly Color SpawnPointColor = new Color(0.85f, 0.15f, 0.15f, 0.75f);
+    public static readonly Color TreasureColor = new Color(1.00f, 0.80f, 0.15f);
     public static readonly Color FloorColor = new Color(0.13f, 0.12f, 0.15f);
     public static readonly Color CameraBackgroundColor = new Color(0.05f, 0.05f, 0.07f);
     public static readonly Color HpBarFillColor = new Color(0.30f, 0.85f, 0.35f);

@@ -87,21 +87,49 @@ public static class Bootstrap
         CreateFloor(arena.transform, "Floor 2", new Vector2(cx, 0f), new Vector2(GameConfig.Room2Width, GameConfig.Room2Height));
         CreateWall(arena.transform, "Wall 2 Top", new Vector2(cx, r2HalfH + t / 2f), new Vector2(GameConfig.Room2Width + 2f * t, t));
         CreateWall(arena.transform, "Wall 2 Bottom", new Vector2(cx, -(r2HalfH + t / 2f)), new Vector2(GameConfig.Room2Width + 2f * t, t));
-        CreateWall(arena.transform, "Wall 2 Right", new Vector2(cx + r2HalfW + t / 2f, 0f), new Vector2(t, GameConfig.Room2Height));
 
-        // Dividing wall between the rooms, split around a doorway at y = 0.
-        // Covers room 2's full (taller) left side, which also seals room 1's right.
-        float doorHalf = GameConfig.DoorHeight / 2f;
-        float segmentH = r2HalfH - doorHalf;
-        CreateWall(arena.transform, "Wall Divider Top", new Vector2(GameConfig.DividerX, doorHalf + segmentH / 2f), new Vector2(t, segmentH));
-        CreateWall(arena.transform, "Wall Divider Bottom", new Vector2(GameConfig.DividerX, -(doorHalf + segmentH / 2f)), new Vector2(t, segmentH));
-        CreateFloor(arena.transform, "Door Floor", new Vector2(GameConfig.DividerX, 0f), new Vector2(t, GameConfig.DoorHeight));
+        // Room 3 (medium, attached to the right of room 2).
+        float r3HalfW = GameConfig.Room3Width / 2f;
+        float r3HalfH = GameConfig.Room3Height / 2f;
+        float cx3 = GameConfig.Room3CenterX;
+
+        CreateFloor(arena.transform, "Floor 3", new Vector2(cx3, 0f), new Vector2(GameConfig.Room3Width, GameConfig.Room3Height));
+        CreateWall(arena.transform, "Wall 3 Top", new Vector2(cx3, r3HalfH + t / 2f), new Vector2(GameConfig.Room3Width + 2f * t, t));
+        CreateWall(arena.transform, "Wall 3 Bottom", new Vector2(cx3, -(r3HalfH + t / 2f)), new Vector2(GameConfig.Room3Width + 2f * t, t));
+        CreateWall(arena.transform, "Wall 3 Right", new Vector2(cx3 + r3HalfW + t / 2f, 0f), new Vector2(t, GameConfig.Room3Height));
+
+        // Dividing walls, each split around a doorway at y = 0. A divider spans
+        // the taller of the two rooms it separates, which seals the shorter
+        // room's side as well.
+        CreateDivider(arena.transform, "Wall Divider", GameConfig.DividerX,
+            Mathf.Max(GameConfig.ArenaHeight, GameConfig.Room2Height));
+        CreateDivider(arena.transform, "Wall Divider 2", GameConfig.Divider2X,
+            Mathf.Max(GameConfig.Room2Height, GameConfig.Room3Height));
 
         CreateSpawnPoints(arena.transform);
+
+        // Treasure at the far end of room 3 — the length of the dungeon away
+        // from the player's start at the origin.
+        Treasure.Spawn(arena.transform,
+            new Vector2(cx3 + r3HalfW - GameConfig.TreasureEdgeInset, 0f));
     }
 
-    // Two spawn points per room, tucked into opposite corners so enemies never
-    // appear on top of the player, who starts at the origin.
+    // A wall of the given height, centered on x, with a doorway punched through
+    // it at y = 0 and a floor strip laid across the gap.
+    static void CreateDivider(Transform parent, string name, float x, float height)
+    {
+        float t = GameConfig.WallThickness;
+        float doorHalf = GameConfig.DoorHeight / 2f;
+        float segmentH = height / 2f - doorHalf;
+
+        CreateWall(parent, name + " Top", new Vector2(x, doorHalf + segmentH / 2f), new Vector2(t, segmentH));
+        CreateWall(parent, name + " Bottom", new Vector2(x, -(doorHalf + segmentH / 2f)), new Vector2(t, segmentH));
+        CreateFloor(parent, name + " Door Floor", new Vector2(x, 0f), new Vector2(t, GameConfig.DoorHeight));
+    }
+
+    // Two spawn points each in rooms 1 and 2, tucked into opposite corners so
+    // enemies never appear on top of the player, who starts at the origin.
+    // Room 3 holds four — one per corner — to defend the treasure.
     static void CreateSpawnPoints(Transform parent)
     {
         float inset = GameConfig.SpawnPointCornerInset;
@@ -116,6 +144,14 @@ public static class Bootstrap
         float r2HalfH = GameConfig.Room2Height / 2f - inset;
         SpawnPoint.Create(parent, "Spawn Point 2A", new Vector2(cx + r2HalfW, r2HalfH));
         SpawnPoint.Create(parent, "Spawn Point 2B", new Vector2(cx + r2HalfW, -r2HalfH));
+
+        float cx3 = GameConfig.Room3CenterX;
+        float r3HalfW = GameConfig.Room3Width / 2f - inset;
+        float r3HalfH = GameConfig.Room3Height / 2f - inset;
+        SpawnPoint.Create(parent, "Spawn Point 3A", new Vector2(cx3 - r3HalfW, r3HalfH));
+        SpawnPoint.Create(parent, "Spawn Point 3B", new Vector2(cx3 - r3HalfW, -r3HalfH));
+        SpawnPoint.Create(parent, "Spawn Point 3C", new Vector2(cx3 + r3HalfW, r3HalfH));
+        SpawnPoint.Create(parent, "Spawn Point 3D", new Vector2(cx3 + r3HalfW, -r3HalfH));
     }
 
     // Floor pieces are visual only, no collider.

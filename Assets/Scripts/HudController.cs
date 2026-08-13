@@ -10,11 +10,13 @@ public class HudController : MonoBehaviour
 {
     RectTransform _hpFill;
     GameObject _gameOverPanel;
+    GameObject _winPanel;
 
     void Awake()
     {
         BuildHpBar();
-        BuildGameOverPanel();
+        _gameOverPanel = BuildEndPanel("GameOverPanel", "GAME OVER", GameConfig.EnemyColor);
+        _winPanel = BuildEndPanel("WinPanel", "YOU WIN!", GameConfig.TreasureColor);
     }
 
     public void SetHealth(float fraction)
@@ -25,6 +27,11 @@ public class HudController : MonoBehaviour
     public void ShowGameOver()
     {
         _gameOverPanel.SetActive(true);
+    }
+
+    public void ShowWin()
+    {
+        _winPanel.SetActive(true);
     }
 
     void BuildHpBar()
@@ -45,12 +52,14 @@ public class HudController : MonoBehaviour
         _hpFill.offsetMax = new Vector2(-3f, -3f);
     }
 
-    void BuildGameOverPanel()
+    // Shared layout for both end-of-round panels: a full-screen dim, a big
+    // colored title, and the restart hint. Starts hidden.
+    GameObject BuildEndPanel(string name, string title, Color titleColor)
     {
-        _gameOverPanel = new GameObject("GameOverPanel");
-        _gameOverPanel.transform.SetParent(transform, false);
+        var panel = new GameObject(name);
+        panel.transform.SetParent(transform, false);
 
-        var dim = _gameOverPanel.AddComponent<Image>();
+        var dim = panel.AddComponent<Image>();
         dim.color = new Color(0f, 0f, 0f, 0.7f);
         dim.raycastTarget = false;
         var dimRect = dim.rectTransform;
@@ -59,12 +68,13 @@ public class HudController : MonoBehaviour
         dimRect.offsetMin = Vector2.zero;
         dimRect.offsetMax = Vector2.zero;
 
-        CreateText("GameOverTitle", _gameOverPanel.transform, "GAME OVER",
-            96, GameConfig.EnemyColor, new Vector2(0f, 50f), new Vector2(1200f, 140f));
-        CreateText("GameOverHint", _gameOverPanel.transform, "Press R to restart",
+        CreateText(name + "Title", panel.transform, title,
+            96, titleColor, new Vector2(0f, 50f), new Vector2(1200f, 140f));
+        CreateText(name + "Hint", panel.transform, "Press R to restart",
             40, Color.white, new Vector2(0f, -60f), new Vector2(1200f, 80f));
 
-        _gameOverPanel.SetActive(false);
+        panel.SetActive(false);
+        return panel;
     }
 
     static Image CreateImage(string name, Transform parent, Color color)

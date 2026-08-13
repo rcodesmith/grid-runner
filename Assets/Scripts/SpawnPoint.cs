@@ -5,8 +5,13 @@ using UnityEngine;
 /// A fixed location enemies spawn from, drawn as a red circle on the floor.
 /// Carries a trigger collider so projectiles can hit it while the player and
 /// enemies still walk straight over it. Takes GameConfig.SpawnPointHits shots
-/// to destroy, fading as it goes. Every live instance registers itself in All
-/// so EnemySpawner can pick one.
+/// to destroy, fading as it goes.
+///
+/// Each point runs its own spawn timer on the shared ramp curve (interval
+/// falling from SpawnIntervalStart to SpawnIntervalEnd over
+/// SpawnRampDuration), so the arena's total spawn rate scales with how many
+/// points are still standing. Every live instance registers itself in All;
+/// EnemySpawner ticks them and owns the actual Enemy.Spawn call.
 /// </summary>
 public class SpawnPoint : MonoBehaviour
 {
@@ -15,6 +20,8 @@ public class SpawnPoint : MonoBehaviour
     SpriteRenderer _renderer;
     Color _fullColor;
     int _hitsRemaining = GameConfig.SpawnPointHits;
+    float _elapsed;
+    float _nextSpawnIn = GameConfig.SpawnIntervalStart;
 
     public static SpawnPoint Create(Transform parent, string name, Vector2 position)
     {
@@ -53,6 +60,34 @@ public class SpawnPoint : MonoBehaviour
         // Restart destroys GameRoot and rebuilds; without this the static list
         // would keep growing and hand out destroyed points.
         All.Remove(this);
+    }
+
+    /// <summary>
+    /// Advances this point's own spawn timer by deltaTime and reports whether
+    /// it is due to spawn, rearming the timer at the current ramped interval
+    /// when it is. Driven by EnemySpawner rather than a local Update so all
+    /// points stop cleanly with the spawner (e.g. once the player is gone).
+    /// </summary>
+    public bool Tick(float deltaTime)
+    {
+        _elapsed += deltaTime;
+        _nextSpawnIn -= deltaTime;
+
+        if (_nextSpawnIn > 0f)
+        {
+            return false;
+        }
+
+        _nextSpawnIn = CurrentInterval();
+        return true;
+    }
+
+    // Same ramp for every point, each on its own clock: intervals shorten from
+    // SpawnIntervalStart to SpawnIntervalEnd over SpawnRampDuration seconds.
+    float CurrentInterval()
+    {
+        float ramp = Mathf.Clamp01(_elapsed / GameConfig.SpawnRampDuration);
+        return Mathf.Lerp(GameConfig.SpawnIntervalStart, GameConfig.SpawnIntervalEnd, ramp);
     }
 
     /// <summary>Applies one shot. Destroys the spawn point once its hits run out.</summary>

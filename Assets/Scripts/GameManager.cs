@@ -14,6 +14,10 @@ public class GameManager : MonoBehaviour
     HudController _hud;
 
     public bool IsGameOver { get; private set; }
+    public bool HasWon { get; private set; }
+
+    /// <summary>True once the round has ended either way; both states freeze time and offer a restart.</summary>
+    public bool IsRoundOver => IsGameOver || HasWon;
 
     public void Init(GameObject root, HudController hud)
     {
@@ -36,7 +40,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (IsGameOver && Input.GetKeyDown(KeyCode.R))
+        if (IsRoundOver && Input.GetKeyDown(KeyCode.R))
         {
             Restart();
         }
@@ -44,7 +48,9 @@ public class GameManager : MonoBehaviour
 
     public void TriggerGameOver()
     {
-        if (IsGameOver)
+        // A win already ended the round — don't overwrite it with a loss (e.g.
+        // an enemy landing a final hit on the same frame the treasure is taken).
+        if (IsRoundOver)
         {
             return;
         }
@@ -54,6 +60,21 @@ public class GameManager : MonoBehaviour
         if (_hud != null)
         {
             _hud.ShowGameOver();
+        }
+    }
+
+    public void TriggerWin()
+    {
+        if (IsRoundOver)
+        {
+            return;
+        }
+
+        HasWon = true;
+        Time.timeScale = 0f;
+        if (_hud != null)
+        {
+            _hud.ShowWin();
         }
     }
 
