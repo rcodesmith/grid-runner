@@ -31,13 +31,16 @@ public static class GameConfig
     public const float SpawnIntervalStart = 3.5f;
     public const float SpawnIntervalEnd = 1.5f;
     public const float SpawnRampDuration = 60f;
-    public const float SpawnEdgeInset = 1.0f;
 
     // Spawn points: fixed red circles enemies emerge from, two per room. Insets
     // are measured from each room's corner, so the points sit on the diagonal
     // just inside opposite corners.
+    // Shooting a spawn point destroys it after SpawnPointHits hits; it fades
+    // toward SpawnPointMinAlphaFactor of its starting alpha as it takes damage.
     public const float SpawnPointSize = 1.6f;
     public const float SpawnPointCornerInset = 2.5f;
+    public const int SpawnPointHits = 10;
+    public const float SpawnPointMinAlphaFactor = 0.3f;
 
     // Projectiles (one hit kills an enemy)
     public const float ProjectileSpeed = 12f;

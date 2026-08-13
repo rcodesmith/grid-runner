@@ -59,6 +59,14 @@ public class Projectile : MonoBehaviour
             return;
         }
 
+        var spawnPoint = other.GetComponent<SpawnPoint>();
+        if (spawnPoint != null)
+        {
+            spawnPoint.TakeHit();
+            Destroy(gameObject);
+            return;
+        }
+
         // Colliders with no attached rigidbody are the static arena walls.
         if (other.attachedRigidbody == null)
         {
