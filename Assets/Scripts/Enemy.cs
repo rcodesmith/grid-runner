@@ -56,42 +56,18 @@ public class Enemy : MonoBehaviour
     }
 
     // Straight-line chase pins enemies against a dividing wall when the player
-    // is in another room, so steer through the doorways first. The rooms form
-    // a left-to-right chain, so the enemy heads for the one divider between it
-    // and the player, then re-evaluates once through. The waypoint sits
-    // slightly past the divider so the enemy actually crosses it before
-    // switching back to chasing the player directly.
+    // is in another room, so ask the dungeon where to head next. It returns
+    // the player directly when both are in the same room, and otherwise a
+    // point just past the next doorway on the route.
     Vector2 ChaseTarget()
     {
-        int enemyRoom = RoomIndex(_body.position.x);
-        int playerRoom = RoomIndex(_target.position.x);
-        if (enemyRoom == playerRoom)
+        var dungeon = Dungeon.Current;
+        if (dungeon == null)
         {
             return _target.position;
         }
 
-        // Move one room toward the player: the divider to cross is the one on
-        // that side of the enemy's current room.
-        bool playerIsRight = playerRoom > enemyRoom;
-        float dividerX = DividerBetween(playerIsRight ? enemyRoom : enemyRoom - 1);
-        float doorwayOvershoot = playerIsRight ? 1.5f : -1.5f;
-        return new Vector2(dividerX + doorwayOvershoot, 0f);
-    }
-
-    // 0 = starting arena, 1 = second room, 2 = third room.
-    static int RoomIndex(float x)
-    {
-        if (x > GameConfig.Divider2X)
-        {
-            return 2;
-        }
-        return x > GameConfig.DividerX ? 1 : 0;
-    }
-
-    // Centerline of the wall on the right side of the given room.
-    static float DividerBetween(int leftRoomIndex)
-    {
-        return leftRoomIndex == 0 ? GameConfig.DividerX : GameConfig.Divider2X;
+        return dungeon.RouteTo(_body.position, _target.position);
     }
 
     void OnCollisionEnter2D(Collision2D collision)

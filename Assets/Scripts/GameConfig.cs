@@ -17,6 +17,10 @@ public static class GameConfig
     public const float Room2Height = 22f;
     public const float Room2CenterX = ArenaWidth / 2f + WallThickness + Room2Width / 2f;
     public const float DoorHeight = 4f;
+    // How far past a doorway a traveller aims before re-steering. Must exceed
+    // WallThickness / 2f, or the waypoint lands inside the wall and enemies
+    // grind against it instead of coming through. Covered by a test.
+    public const float DoorwayOvershoot = 1.5f;
     // Centerline of the dividing wall; anything with x beyond this is in room 2.
     public const float DividerX = ArenaWidth / 2f + WallThickness / 2f;
 

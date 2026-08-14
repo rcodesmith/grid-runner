@@ -34,16 +34,21 @@ public static class Bootstrap
 
         var root = new GameObject("GameRoot");
 
-        var cameraFollow = CreateCamera(root.transform);
-        CreateArena(root.transform);
+        // The world's layout, built as data. Everything below places objects
+        // by asking the dungeon, rather than recomputing geometry.
+        var dungeon = GauntletDungeon.Build();
+        Dungeon.Current = dungeon;
+
+        var cameraFollow = CreateCamera(root.transform, dungeon);
+        CreateArena(root.transform, dungeon);
         var hud = CreateHud(root.transform);
         CreateGameManager(root, hud);
-        var player = CreatePlayer(root.transform, hud);
+        var player = CreatePlayer(root.transform, hud, GauntletDungeon.PlayerStart(dungeon));
         cameraFollow.Init(player.transform);
         CreateSpawner(root.transform, player.transform);
     }
 
-    static CameraFollow CreateCamera(Transform parent)
+    static CameraFollow CreateCamera(Transform parent, Dungeon dungeon)
     {
         var go = new GameObject("Main Camera");
         go.transform.SetParent(parent, false);
@@ -55,103 +60,152 @@ public static class Bootstrap
         camera.backgroundColor = GameConfig.CameraBackgroundColor;
 
         // Sized to show roughly one room at a time; CameraFollow keeps the
-        // player centered as they roam between rooms.
-        float halfHeightNeeded = GameConfig.ArenaHeight / 2f + GameConfig.WallThickness + 0.5f;
-        float halfWidthNeeded = GameConfig.ArenaWidth / 2f + GameConfig.WallThickness + 0.5f;
+        // player centered as they roam between rooms. Framed on the room the
+        // player starts in.
+        var startRoom = dungeon.Rooms[0];
+        float halfHeightNeeded = startRoom.Size.y / 2f + GameConfig.WallThickness + 0.5f;
+        float halfWidthNeeded = startRoom.Size.x / 2f + GameConfig.WallThickness + 0.5f;
         camera.orthographicSize = Mathf.Max(halfHeightNeeded, halfWidthNeeded / camera.aspect);
 
         go.AddComponent<AudioListener>();
         return go.AddComponent<CameraFollow>();
     }
 
-    static void CreateArena(Transform parent)
+    static void CreateArena(Transform parent, Dungeon dungeon)
     {
         var arena = new GameObject("Arena");
         arena.transform.SetParent(parent, false);
 
-        float halfW = GameConfig.ArenaWidth / 2f;
-        float halfH = GameConfig.ArenaHeight / 2f;
         float t = GameConfig.WallThickness;
 
-        // Room 1 (the original arena). Its right side is the dividing wall.
-        CreateFloor(arena.transform, "Floor", Vector2.zero, new Vector2(GameConfig.ArenaWidth, GameConfig.ArenaHeight));
-        CreateWall(arena.transform, "Wall Top", new Vector2(0f, halfH + t / 2f), new Vector2(GameConfig.ArenaWidth + 2f * t, t));
-        CreateWall(arena.transform, "Wall Bottom", new Vector2(0f, -(halfH + t / 2f)), new Vector2(GameConfig.ArenaWidth + 2f * t, t));
-        CreateWall(arena.transform, "Wall Left", new Vector2(-(halfW + t / 2f), 0f), new Vector2(t, GameConfig.ArenaHeight));
+        // Each room gets a floor and its own outer walls. A room's wall is
+        // skipped where a doorway pierces it — the divider built below takes
+        // over that side, split around the gap.
+        foreach (var room in dungeon.Rooms)
+        {
+            CreateFloor(arena.transform, room.Name + " Floor", room.Center, room.Size);
 
-        // Room 2 (bigger, attached to the right).
-        float r2HalfW = GameConfig.Room2Width / 2f;
-        float r2HalfH = GameConfig.Room2Height / 2f;
-        float cx = GameConfig.Room2CenterX;
+            // Top and bottom run the full width plus the corners.
+            CreateWall(arena.transform, room.Name + " Wall Top",
+                new Vector2(room.Center.x, room.MaxY + t / 2f),
+                new Vector2(room.Size.x + 2f * t, t));
+            CreateWall(arena.transform, room.Name + " Wall Bottom",
+                new Vector2(room.Center.x, room.MinY - t / 2f),
+                new Vector2(room.Size.x + 2f * t, t));
 
-        CreateFloor(arena.transform, "Floor 2", new Vector2(cx, 0f), new Vector2(GameConfig.Room2Width, GameConfig.Room2Height));
-        CreateWall(arena.transform, "Wall 2 Top", new Vector2(cx, r2HalfH + t / 2f), new Vector2(GameConfig.Room2Width + 2f * t, t));
-        CreateWall(arena.transform, "Wall 2 Bottom", new Vector2(cx, -(r2HalfH + t / 2f)), new Vector2(GameConfig.Room2Width + 2f * t, t));
+            if (!HasDoorwayOnSide(dungeon, room, left: true))
+            {
+                CreateWall(arena.transform, room.Name + " Wall Left",
+                    new Vector2(room.MinX - t / 2f, room.Center.y),
+                    new Vector2(t, room.Size.y));
+            }
 
-        // Room 3 (medium, attached to the right of room 2).
-        float r3HalfW = GameConfig.Room3Width / 2f;
-        float r3HalfH = GameConfig.Room3Height / 2f;
-        float cx3 = GameConfig.Room3CenterX;
+            if (!HasDoorwayOnSide(dungeon, room, left: false))
+            {
+                CreateWall(arena.transform, room.Name + " Wall Right",
+                    new Vector2(room.MaxX + t / 2f, room.Center.y),
+                    new Vector2(t, room.Size.y));
+            }
+        }
 
-        CreateFloor(arena.transform, "Floor 3", new Vector2(cx3, 0f), new Vector2(GameConfig.Room3Width, GameConfig.Room3Height));
-        CreateWall(arena.transform, "Wall 3 Top", new Vector2(cx3, r3HalfH + t / 2f), new Vector2(GameConfig.Room3Width + 2f * t, t));
-        CreateWall(arena.transform, "Wall 3 Bottom", new Vector2(cx3, -(r3HalfH + t / 2f)), new Vector2(GameConfig.Room3Width + 2f * t, t));
-        CreateWall(arena.transform, "Wall 3 Right", new Vector2(cx3 + r3HalfW + t / 2f, 0f), new Vector2(t, GameConfig.Room3Height));
+        // Dividing walls, each split around its doorway. A divider spans the
+        // taller of the two rooms it separates, which seals the shorter room's
+        // side as well.
+        foreach (var doorway in dungeon.Doorways)
+        {
+            CreateDivider(arena.transform, doorway,
+                Mathf.Max(doorway.A.Size.y, doorway.B.Size.y));
+        }
 
-        // Dividing walls, each split around a doorway at y = 0. A divider spans
-        // the taller of the two rooms it separates, which seals the shorter
-        // room's side as well.
-        CreateDivider(arena.transform, "Wall Divider", GameConfig.DividerX,
-            Mathf.Max(GameConfig.ArenaHeight, GameConfig.Room2Height));
-        CreateDivider(arena.transform, "Wall Divider 2", GameConfig.Divider2X,
-            Mathf.Max(GameConfig.Room2Height, GameConfig.Room3Height));
+        CreateSpawnPoints(arena.transform, dungeon);
 
-        CreateSpawnPoints(arena.transform);
-
-        // Treasure at the far end of room 3 — the length of the dungeon away
-        // from the player's start at the origin.
-        Treasure.Spawn(arena.transform,
-            new Vector2(cx3 + r3HalfW - GameConfig.TreasureEdgeInset, 0f));
+        // Treasure at the far end of the last room — the length of the dungeon
+        // away from the player's start.
+        Treasure.Spawn(arena.transform, GauntletDungeon.TreasureAt(dungeon));
     }
 
-    // A wall of the given height, centered on x, with a doorway punched through
-    // it at y = 0 and a floor strip laid across the gap.
-    static void CreateDivider(Transform parent, string name, float x, float height)
+    // True when a doorway pierces the given vertical side of this room, so the
+    // solid wall should be left out and a divider built instead.
+    static bool HasDoorwayOnSide(Dungeon dungeon, Room room, bool left)
+    {
+        float edge = left ? room.MinX : room.MaxX;
+
+        foreach (var doorway in dungeon.Doorways)
+        {
+            if (doorway.Other(room) == null)
+            {
+                continue;
+            }
+
+            // The doorway sits in the gap just outside this edge.
+            if (Mathf.Abs(doorway.Position.x - edge) <= GameConfig.WallThickness)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // A wall spanning the given height, centered on the doorway's x, with the
+    // doorway gap punched through it and a floor strip laid across the gap.
+    static void CreateDivider(Transform parent, Doorway doorway, float height)
     {
         float t = GameConfig.WallThickness;
-        float doorHalf = GameConfig.DoorHeight / 2f;
-        float segmentH = height / 2f - doorHalf;
+        float x = doorway.Position.x;
+        float doorCenterY = doorway.Position.y;
+        float doorHalf = doorway.Width / 2f;
+        string name = doorway.A.Name + " to " + doorway.B.Name;
 
-        CreateWall(parent, name + " Top", new Vector2(x, doorHalf + segmentH / 2f), new Vector2(t, segmentH));
-        CreateWall(parent, name + " Bottom", new Vector2(x, -(doorHalf + segmentH / 2f)), new Vector2(t, segmentH));
-        CreateFloor(parent, name + " Door Floor", new Vector2(x, 0f), new Vector2(t, GameConfig.DoorHeight));
+        float topSegmentH = (height / 2f) - doorHalf;
+        float bottomSegmentH = (height / 2f) - doorHalf;
+
+        CreateWall(parent, name + " Divider Top",
+            new Vector2(x, doorCenterY + doorHalf + topSegmentH / 2f),
+            new Vector2(t, topSegmentH));
+        CreateWall(parent, name + " Divider Bottom",
+            new Vector2(x, doorCenterY - doorHalf - bottomSegmentH / 2f),
+            new Vector2(t, bottomSegmentH));
+        CreateFloor(parent, name + " Door Floor",
+            new Vector2(x, doorCenterY),
+            new Vector2(t, doorway.Width));
     }
 
-    // Two spawn points each in rooms 1 and 2, tucked into opposite corners so
-    // enemies never appear on top of the player, who starts at the origin.
-    // Room 3 holds four — one per corner — to defend the treasure.
-    static void CreateSpawnPoints(Transform parent)
+    // Spawn points tucked into room corners so enemies never appear on top of
+    // the player. The first two rooms use their far corners only; the last
+    // room uses all four, to defend the treasure.
+    static void CreateSpawnPoints(Transform parent, Dungeon dungeon)
     {
         float inset = GameConfig.SpawnPointCornerInset;
 
-        float halfW = GameConfig.ArenaWidth / 2f - inset;
-        float halfH = GameConfig.ArenaHeight / 2f - inset;
-        SpawnPoint.Create(parent, "Spawn Point 1A", new Vector2(-halfW, halfH));
-        SpawnPoint.Create(parent, "Spawn Point 1B", new Vector2(-halfW, -halfH));
+        for (int i = 0; i < dungeon.Rooms.Count; i++)
+        {
+            var room = dungeon.Rooms[i];
+            bool isLastRoom = i == dungeon.Rooms.Count - 1;
 
-        float cx = GameConfig.Room2CenterX;
-        float r2HalfW = GameConfig.Room2Width / 2f - inset;
-        float r2HalfH = GameConfig.Room2Height / 2f - inset;
-        SpawnPoint.Create(parent, "Spawn Point 2A", new Vector2(cx + r2HalfW, r2HalfH));
-        SpawnPoint.Create(parent, "Spawn Point 2B", new Vector2(cx + r2HalfW, -r2HalfH));
+            int index = 0;
+            foreach (var anchor in Dungeon.CornerAnchors(room, inset))
+            {
+                // CornerAnchors yields left-top, left-bottom, right-top,
+                // right-bottom. Rooms before the last keep only the two
+                // corners furthest from the player's approach.
+                if (!isLastRoom && !KeepsCorner(i, index))
+                {
+                    index++;
+                    continue;
+                }
 
-        float cx3 = GameConfig.Room3CenterX;
-        float r3HalfW = GameConfig.Room3Width / 2f - inset;
-        float r3HalfH = GameConfig.Room3Height / 2f - inset;
-        SpawnPoint.Create(parent, "Spawn Point 3A", new Vector2(cx3 - r3HalfW, r3HalfH));
-        SpawnPoint.Create(parent, "Spawn Point 3B", new Vector2(cx3 - r3HalfW, -r3HalfH));
-        SpawnPoint.Create(parent, "Spawn Point 3C", new Vector2(cx3 + r3HalfW, r3HalfH));
-        SpawnPoint.Create(parent, "Spawn Point 3D", new Vector2(cx3 + r3HalfW, -r3HalfH));
+                SpawnPoint.Create(parent, room.Name + " Spawn " + index, anchor);
+                index++;
+            }
+        }
+    }
+
+    // Room 1 spawns on its left corners, room 2 on its right — the layout the
+    // game has always had.
+    static bool KeepsCorner(int roomIndex, int cornerIndex)
+    {
+        bool isLeftCorner = cornerIndex < 2;
+        return roomIndex == 0 ? isLeftCorner : !isLeftCorner;
     }
 
     // Floor pieces are visual only, no collider.
@@ -205,11 +259,11 @@ public static class Bootstrap
         gameManager.Init(root, hud);
     }
 
-    static GameObject CreatePlayer(Transform parent, HudController hud)
+    static GameObject CreatePlayer(Transform parent, HudController hud, Vector2 startPosition)
     {
         var go = new GameObject("Player");
         go.transform.SetParent(parent, false);
-        go.transform.position = Vector3.zero;
+        go.transform.position = startPosition;
         go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
         var renderer = go.AddComponent<SpriteRenderer>();
