@@ -5,14 +5,28 @@ A code-first Unity 6 (6000.0.81f1) 2D dungeon crawler in the style of Gauntlet
 `Assets/Scripts/Bootstrap.cs` builds the entire world at Play time under a
 single `GameRoot`.
 
+## Where this is heading
+
+Long term, this becomes a **general engine** that runs many kinds of worlds
+(fantasy, space, …) described in a **text format an LLM can author** and the
+game loads at runtime — not one hardcoded Gauntlet clone.
+
+Read `.scratch/world-format/map.md` before proposing architecture: it records
+the settled decisions, the next step, and the open questions. `Dungeon` is the
+seam that world files will plug into.
+
 ## Working in this repo
 
 - **Never suggest editor wiring.** No prefab dragging, no inspector fields, no
   scene authoring — everything is constructed in code. A change that requires
   someone to click something in the editor is the wrong change.
 - **Legacy input.** Uses `UnityEngine.Input`, not the Input System package.
-- **Gameplay numbers live in `Assets/Scripts/GameConfig.cs`.** Known exception:
-  the `1.5f` doorway overshoot in `Enemy.cs:77`.
+- **Gameplay numbers live in `Assets/Scripts/GameConfig.cs`.** No exceptions
+  currently — keep it that way.
+- **World layout is data, not constants.** `Dungeon` holds rooms and doorways
+  and answers `RoomAt` / `RouteTo` / `CornerAnchors`; `GauntletDungeon.Build()`
+  supplies today's three rooms. Nothing should hardcode a room count, a
+  left-to-right chain, or a divider position — ask the `Dungeon`.
 - **Zero art assets.** Sprites are generated at runtime by
   `PlaceholderSprites.cs`. Don't add image files.
 
