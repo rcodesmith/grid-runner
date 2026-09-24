@@ -6,7 +6,7 @@ using UnityEngine;
 /// movement direction, defaulting to up at spawn.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IFacing
 {
     Rigidbody2D _body;
     Vector2 _input;
@@ -26,10 +26,7 @@ public class PlayerController : MonoBehaviour
             _input.Normalize(); // keep diagonals the same speed
         }
 
-        if (_input.sqrMagnitude > 0.0001f)
-        {
-            Facing = _input.normalized;
-        }
+        Facing = Heading.Toward(Facing, _input);
     }
 
     void FixedUpdate()

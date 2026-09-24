@@ -27,8 +27,11 @@ seam that world files will plug into.
   and answers `RoomAt` / `RouteTo` / `CornerAnchors`; `GauntletDungeon.Build()`
   supplies today's three rooms. Nothing should hardcode a room count, a
   left-to-right chain, or a divider position — ask the `Dungeon`.
-- **Zero art assets.** Sprites are generated at runtime by
-  `PlaceholderSprites.cs`. Don't add image files.
+- **Character art is PNG under `Assets/Resources/Sprites/`.** One 16×16-per-frame
+  strip per character, loaded by name via `CharacterSprites.Load`.
+  `Assets/Editor/CharacterSpriteImporter.cs` enforces the import settings and
+  slicing — never set them by hand in the inspector. Everything else is
+  generated at runtime by `PlaceholderSprites.cs`.
 
 ## Verifying a change
 
@@ -49,6 +52,7 @@ those, say what remains unverified rather than claiming it works.
 ## Assemblies
 
 - `Assets/Scripts/Gauntlet.asmdef` — runtime code
+- `Assets/Editor/Gauntlet.Editor.asmdef` — Editor-only import scripts
 - `Assets/Tests/EditMode/Gauntlet.Tests.EditMode.asmdef` — Editor-only tests
 
 Tests reach runtime code through the `Gauntlet` reference. Logic that needs a

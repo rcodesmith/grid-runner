@@ -267,7 +267,6 @@ public static class Bootstrap
         go.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
 
         var renderer = go.AddComponent<SpriteRenderer>();
-        renderer.sprite = PlaceholderSprites.Square(GameConfig.PlayerColor);
         renderer.sortingOrder = 10;
 
         var body = go.AddComponent<Rigidbody2D>();
@@ -276,9 +275,13 @@ public static class Bootstrap
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        go.AddComponent<BoxCollider2D>();
+        // Sized explicitly so the sprite's bounds never resize the hitbox.
+        var collider = go.AddComponent<BoxCollider2D>();
+        collider.size = Vector2.one;
 
-        go.AddComponent<PlayerController>();
+        var controller = go.AddComponent<PlayerController>();
+        go.AddComponent<FacingSprite>()
+            .Init(CharacterSprites.Load("warrior", FacingPose.Count), controller);
         go.AddComponent<PlayerShooting>();
         var health = go.AddComponent<PlayerHealth>();
         health.Init(hud);

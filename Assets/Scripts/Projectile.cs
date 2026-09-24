@@ -1,13 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// A projectile that kills the first enemy it touches, disappears against
+/// A thrown axe that kills the first enemy it touches, disappears against
 /// arena walls, and despawns after a fixed lifetime. Created entirely from
-/// code via the Spawn factory.
+/// code via the Spawn factory. The axe sprite spins on a child object, so
+/// the physics body (rotation frozen) and its collider are left alone.
 /// </summary>
 public class Projectile : MonoBehaviour
 {
     float _despawnAt;
+    Transform _axe;
 
     public static Projectile Spawn(Vector2 position, Vector2 direction, Collider2D shooter, Transform parent)
     {
@@ -16,8 +18,11 @@ public class Projectile : MonoBehaviour
         go.transform.position = position;
         go.transform.localScale = new Vector3(0.3f, 0.3f, 1f);
 
-        var renderer = go.AddComponent<SpriteRenderer>();
-        renderer.sprite = PlaceholderSprites.Circle(GameConfig.ProjectileColor);
+        var axe = new GameObject("Axe");
+        axe.transform.SetParent(go.transform, false);
+        var renderer = axe.AddComponent<SpriteRenderer>();
+        var frames = CharacterSprites.Load("axe", 1);
+        renderer.sprite = frames != null ? frames[0] : null;
         renderer.sortingOrder = 5;
 
         var body = go.AddComponent<Rigidbody2D>();
@@ -25,7 +30,9 @@ public class Projectile : MonoBehaviour
         body.freezeRotation = true;
         body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
 
+        // Sized explicitly: with the sprite on a child, nothing else sets it.
         var collider = go.AddComponent<CircleCollider2D>();
+        collider.radius = 0.5f;
         collider.isTrigger = true;
 
         // Prevent self-collision with the shooter (no tags/layers in v0.1).
@@ -38,11 +45,14 @@ public class Projectile : MonoBehaviour
 
         var projectile = go.AddComponent<Projectile>();
         projectile._despawnAt = Time.time + GameConfig.ProjectileLifetime;
+        projectile._axe = axe.transform;
         return projectile;
     }
 
     void Update()
     {
+        _axe.Rotate(0f, 0f, -GameConfig.AxeSpinDegreesPerSecond * Time.deltaTime);
+
         if (Time.time >= _despawnAt)
         {
             Destroy(gameObject);

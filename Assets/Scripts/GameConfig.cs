@@ -61,11 +61,11 @@ public static class GameConfig
     // Projectiles (one hit kills an enemy)
     public const float ProjectileSpeed = 12f;
     public const float ProjectileLifetime = 2f;
+    // Thrown axes spin clockwise in flight (visual only).
+    public const float AxeSpinDegreesPerSecond = 720f;
 
     // Placeholder palette
-    public static readonly Color PlayerColor = new Color(0.30f, 0.85f, 0.35f);
     public static readonly Color EnemyColor = new Color(0.90f, 0.25f, 0.20f);
-    public static readonly Color ProjectileColor = new Color(1.00f, 0.85f, 0.25f);
     public static readonly Color WallColor = new Color(0.45f, 0.45f, 0.50f);
     public static readonly Color SpawnPointColor = new Color(0.85f, 0.15f, 0.15f, 0.75f);
     public static readonly Color TreasureColor = new Color(1.00f, 0.80f, 0.15f);

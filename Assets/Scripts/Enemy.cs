@@ -4,13 +4,20 @@ using UnityEngine;
 /// Chases the player via Rigidbody2D velocity, damages the player on contact
 /// (PlayerHealth enforces the invulnerability window), and dies in one hit
 /// from a projectile. Created entirely from code via the Spawn factory.
+/// Drawn as a grunt that faces the way it is trying to go.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
-public class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour, IFacing
 {
     Rigidbody2D _body;
     Transform _target;
     bool _dead;
+
+    /// <summary>
+    /// The direction the enemy is trying to move — not its velocity, which
+    /// collisions deflect. Kept while stopped; faces the player at spawn.
+    /// </summary>
+    public Vector2 Facing { get; private set; } = Vector2.down;
 
     public static Enemy Spawn(Vector2 position, Transform target, Transform parent)
     {
@@ -20,7 +27,6 @@ public class Enemy : MonoBehaviour
         go.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
 
         var renderer = go.AddComponent<SpriteRenderer>();
-        renderer.sprite = PlaceholderSprites.Square(GameConfig.EnemyColor);
         renderer.sortingOrder = 8;
 
         var body = go.AddComponent<Rigidbody2D>();
@@ -29,10 +35,15 @@ public class Enemy : MonoBehaviour
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         // Round collider slides along walls and other enemies without snagging.
-        go.AddComponent<CircleCollider2D>();
+        // Sized explicitly so the sprite's bounds never resize the hitbox.
+        var collider = go.AddComponent<CircleCollider2D>();
+        collider.radius = 0.5f;
 
         var enemy = go.AddComponent<Enemy>();
         enemy._target = target;
+        enemy.Facing = Heading.Toward(enemy.Facing, (Vector2)target.position - position);
+        go.AddComponent<FacingSprite>()
+            .Init(CharacterSprites.Load("grunt", FacingPose.Count), enemy);
         return enemy;
     }
 
@@ -53,6 +64,7 @@ public class Enemy : MonoBehaviour
         _body.linearVelocity = toTarget.sqrMagnitude > 0.0001f
             ? toTarget.normalized * GameConfig.EnemySpeed
             : Vector2.zero;
+        Facing = Heading.Toward(Facing, toTarget);
     }
 
     // Straight-line chase pins enemies against a dividing wall when the player
