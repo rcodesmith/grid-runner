@@ -12,8 +12,9 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
-Because this repo's tracker is local markdown, a "label" is the value of the
-`Status:` line near the top of an issue file — not a tracker-side label object.
-There is nothing to create up front.
+These are real GitHub labels on `rcodesmith/grid-runner` — all five already
+exist. Apply them with `gh issue create -l <label>` or
+`gh issue edit <n> --add-label <label> --remove-label <old>`. An issue carries
+exactly one triage label at a time.
 
 Edit the right-hand column to match whatever vocabulary you actually use.

@@ -11,7 +11,7 @@ Long term, this becomes a **general engine** that runs many kinds of worlds
 (fantasy, space, …) described in a **text format an LLM can author** and the
 game loads at runtime — not one hardcoded Gauntlet clone.
 
-Read `.scratch/world-format/map.md` before proposing architecture: it records
+Read `docs/world-format/map.md` before proposing architecture: it records
 the settled decisions, the next step, and the open questions. `Dungeon` is the
 seam that world files will plug into.
 
@@ -59,7 +59,7 @@ behind a small interface.
 
 ### Issue tracker
 
-Issues live as local markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+Issues live on GitHub at `rcodesmith/grid-runner` (use `gh`). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

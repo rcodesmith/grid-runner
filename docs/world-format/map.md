@@ -29,7 +29,7 @@ re-litigate them without a reason.
 | Format vocabulary | **Generic and spatial.** Rooms/regions with typed contents. "goblin" vs "alien" is a name and a colour, not a schema change. Themed vocabularies (bulkhead, airlock) were rejected — they multiply surface area and give an LLM more ways to be wrong. |
 | Engine/game split | **Conceptual for now.** One assembly, written so nothing dungeon-specific leaks into the core. A structural `Engine`/`Game` asmdef split is cheap later and the compiler will find every leak. |
 | Behaviour changes | **Kept separate from structural work.** Refactors preserve behaviour exactly; known oddities get their own tickets. |
-| Enemy HP | **Deferred.** See `issues/01-enemies-have-no-hp.md` — it's a prerequisite for data-driven enemy variety, but it changes how the game plays. |
+| Enemy HP | **Deferred.** See [#4](https://github.com/rcodesmith/grid-runner/issues/4) — it's a prerequisite for data-driven enemy variety, but it changes how the game plays. |
 
 Motivation for the cleanup generally: **preventive**, getting ahead of technical
 debt. Adding room 3 was not painful. There is no fire — don't over-scope.
@@ -102,7 +102,7 @@ module above). The rest, in the review's recommended order:
   `SpawnPoint.All` list with three write sites. Same shape as the Dungeon work.
 - **Candidate 3 — `Round`** (Worth exploring). Three modules reach into
   `GameManager.Instance` and already disagree about what "round over" means (see
-  `../known-oddities/issues/02-shooting-allowed-after-win.md`). Would also give
+  [#2](https://github.com/rcodesmith/grid-runner/issues/2)). Would also give
   `Dungeon.Current` a better home than a static.
 - **Candidate 4 — actor factory** (was Speculative, now stronger). Five spawn
   factories repeat the same six-step recipe. "Spawn an entity from a spec" is
